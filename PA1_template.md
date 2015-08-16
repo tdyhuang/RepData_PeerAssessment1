@@ -7,7 +7,7 @@
 
 
 ```r
-a=read.csv("C:\\Users\\user\\Documents\\activity.csv")
+a=read.csv("~/activity.csv")
 ```
 
 
@@ -91,7 +91,7 @@ b
 ### 2. Make a histogram of the total number of steps taken each day
 
 ```r
-hist(b$steps,col="red",xlab="steps",main="total number of steps taken per day")
+hist(b$steps,col="red",xlab="steps",main="histogram of total  steps taken per day with missing value")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
@@ -123,7 +123,9 @@ library(reshape2)
 
 ```r
 md=melt(a,id.vars=c("date","interval"),na.rm=T)
+## create new dataframe with 2 column -interval and mean steps
 new=dcast(md,interval~variable,mean)
+## make the plot
 plot(new,type="l",col="red",main=" average steps of 5-minute interval")
 ```
 
@@ -135,7 +137,7 @@ plot(new,type="l",col="red",main=" average steps of 5-minute interval")
 
 
 ```r
-## nof subset of record contain NA
+## dataframe nof subset of record contain missing value
 nof=a[is.na(a$steps)==T,]
 number=nrow(nof) ## total records that contain NA
 ```
@@ -143,10 +145,13 @@ number=nrow(nof) ## total records that contain NA
 ### 1.The total number of missing values in the dataset is 2304 
 
 ### 2. Devise a strategy for filling in all of the missing values in the dataset using the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+### **Missing value, will filling with  mean of that 5-minute interval**
+
 ### 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
 ```r
-##let dataframe a add a  interval average steps column
+##let dataframe a add a 5-minute interval average steps column
 library(dplyr)
 ```
 
@@ -170,39 +175,50 @@ library(dplyr)
 ```r
 a=tbl_df(a)
 new=tbl_df(new)
-extstep=new
+extstep=new 
 for(i in 1:60){extstep=rbind(extstep,new)}
 names(extstep)=c("interval","mean")
-exta=cbind(a,extstep$mean)
+exta=cbind(a,extstep$mean)## create a dataframe exta=original original dataframe + mean interval column
 names(exta)=c("steps","date","interval","mstep")
+## extab- subset of missing value records
 extab=filter(exta,is.na(steps))
+##replace missing steps with mean
 extab=mutate(extab,steps=mstep)
 extab=select(extab,steps,date,interval)
+## isa - subset of complete records
 isa=filter(a,!is.na(steps))
+##rbind two subset to complete the whole data
 data=arrange(rbind(isa,extab),date,interval)
+##show the results of replacement
 head(data)
 ```
 ### 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
 
 
 ```r
+##grouping data by date
 data_mean=group_by(data,date)
+##sum up steps by date
 sumsteps=summarise(data_mean,sum(steps))
 names(sumsteps)=c("date","total")
-hist(sumsteps$total)
+##plot histgram
+hist(sumsteps$total,main = "histogram of Total steps taken per day filling missing value with interval mean",xlab = "steps")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
 
 ```r
+##calculate with mean and median 
 filled_mean=mean(sumsteps$total)
-filled_mean=format(filled_mean,scipen=100)
-filled_median=median(sumsteps$total)
-filled_median=format(filled_median,scipen=100)
-```
-### the mean  total number of steps taken per day is 10766.19
-### the median total number of steps taken per day is 10766.19
+## formatting the mean and median not to show as scientific format
 
+filled_mean=format(filled_mean,scipen=100,digit=5)
+filled_median=median(sumsteps$total)
+filled_median=format(filled_median,scipen=100,digits = 5)
+```
+### the mean  total number of steps taken per day is 10766
+
+### the median total number of steps taken per day is 10766
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
